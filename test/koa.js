@@ -3,7 +3,7 @@
 const Promise = require('bluebird')
 const koa = require('koa')
 const onerror = require('koa-onerror')
-const superagent = require('supertest-as-promised')
+const supertest = require('supertest')
 const ServiceAgent = require('../index')
 const koaMiddleware = require('../koa')
 
@@ -12,7 +12,7 @@ function createApp(agentOpts, verOpts, mw) {
   onerror(app)
   app.use(koaMiddleware(agentOpts, verOpts))
   app.use(mw)
-  return superagent(app.callback())
+  return supertest(app.callback())
 }
 
 describe('service2service/koa', () => {

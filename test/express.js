@@ -3,7 +3,7 @@
 const Promise = require('bluebird')
 const chai = require('chai')
 const express = require('express')
-const superagent = require('supertest-as-promised')
+const supertest = require('supertest')
 const ServiceAgent = require('../index')
 const expressMiddleware = require('../express')
 
@@ -13,7 +13,7 @@ function createApp(agentOpts, verOpts, mw) {
   const app = express()
   app.use(expressMiddleware(agentOpts, verOpts))
   app.use(mw)
-  return superagent(app)
+  return supertest(app)
 }
 
 describe('service2service/express', () => {

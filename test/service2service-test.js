@@ -97,6 +97,16 @@ describe('service2service', () => {
         .then((token) => agent.verify(token, options))
     })
 
+    it('fails if there is no secret', () => {
+      const agent1 = new ServiceAgent({ secret: 'foo' })
+      const agent2 = new ServiceAgent({ secret: [] })
+      return agent1.generate()
+        .then((token) => {
+          return expect(agent2.verify(token))
+            .to.eventually.be.rejectedWith('At least one secret is required')
+        })
+    })
+
     it('fails if expired', () => {
       const agent = new ServiceAgent({
         secret: 'foo',

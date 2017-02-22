@@ -121,17 +121,19 @@ Returns a new "secret service agent"
       'super secret',
       'super secret2'
     ],
-    expire: 60000, // 1 minute
-    header: 'X-Service-Token'
+    expire: 60, // 1 minute
+    header: 'Authorization'
   })
   ```
 
-  Default: `null`
+  Default: `null` - Note that this is a required option. You must have at least
+  1 secret or this will throw an error on verification. This is a breaking
+  change as of version 2.x.
 
 - `options.expire` - {number} - The number of seconds that the token is valid
-  for. This should be something low, like 1 minute (`60000`).
+  for. This should be something low, like 1 minute (`60`).
 
-  Default: `60000`
+  Default: `60`
 
 - `options.header` {string} - The header that will contain the token.
 
@@ -141,7 +143,7 @@ Returns a new "secret service agent"
   token is sent in a request. This will also be used to strip out the prefix
   upon verification. If a token is sent without a prefix, it will still verify.
 
-  Default: `Bearer ` (yes, that's a space at the beginning)
+  Default: `Bearer ` (yes, that's a space at the end)
 
 ## `agent.generate([options [, payload]])`
 
