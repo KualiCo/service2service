@@ -23,7 +23,8 @@ class ServiceAgent {
       secret: null,
       expire: 60,
       header: 'Authorization',
-      tokenPrefix: 'Bearer '
+      tokenPrefix: 'Bearer ',
+      disableSingleUse: false
     }, options)
 
     if (!options.secret) {
@@ -36,10 +37,13 @@ class ServiceAgent {
       options.secret = () => val
     }
 
-    this[getSecrets] = Promise.method(options.secret)
-    this.expire = options.expire
-    this.header = options.header
-    this.tokenPrefix = options.tokenPrefix
+    Object.assign(this, {
+      [getSecrets]: Promise.method(options.secret),
+      expire: options.expire,
+      header: options.header,
+      tokenPrefix: options.tokenPrefix,
+      disableSingleUse: options.disableSingleUse
+    })
   }
 
   generate(options, payload) {
@@ -67,7 +71,9 @@ class ServiceAgent {
       })
       .then((payload) => {
         const expireMs = payload.exp * SECONDS_TO_MILLISECONDS - Date.now()
-        usedTokens.add(payload.uuid, expireMs * EXPIRE_SAFETY_MULTIPLIER)
+        if (!this.disableSingleUse) {
+          usedTokens.add(payload.uuid, expireMs * EXPIRE_SAFETY_MULTIPLIER)
+        }
         return payload
       })
   }

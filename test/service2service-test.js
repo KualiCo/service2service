@@ -99,7 +99,7 @@ describe('service2service', () => {
 
     it('fails if there is no secret', () => {
       const agent1 = new ServiceAgent({ secret: 'foo' })
-      const agent2 = new ServiceAgent({ secret: [] })
+      const agent2 = new ServiceAgent({ secret: []})
       return agent1.generate()
         .then((token) => {
           return expect(agent2.verify(token))
@@ -148,6 +148,19 @@ describe('service2service', () => {
         .then(() => {
           return expect(agent.verify(theToken))
             .to.eventually.be.rejectedWith('Token has already been used')
+        })
+    })
+
+    it('works if disableSingleUse is set to true', () => {
+      const agent = new ServiceAgent({ secret: 'foo', disableSingleUse: true })
+      let theToken
+      return agent.generate()
+        .then((token) => {
+          theToken = token
+          return agent.verify(theToken)
+        })
+        .then(() => {
+          return agent.verify(theToken)
         })
     })
 

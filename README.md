@@ -145,6 +145,13 @@ Returns a new "secret service agent"
 
   Default: `Bearer ` (yes, that's a space at the end)
 
+- `options.disableSingleUse` {boolean} - By default, service2service will only
+  allow unique tokens. It does this by harboring a cache of used tokens (it
+  cleans up after itself). Setting this to `true` will disable this caching and
+  checking behavior.
+
+  Default: `false`
+
 ## `agent.generate([options [, payload]])`
 
 Returns a promise that resolves to a generated token, or throws if your secret
