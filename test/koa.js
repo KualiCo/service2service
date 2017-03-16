@@ -1,14 +1,14 @@
 'use strict'
 
 const Promise = require('bluebird')
-const koa = require('koa')
+const Koa = require('koa')
 const onerror = require('koa-onerror')
 const supertest = require('supertest')
 const ServiceAgent = require('../index')
 const koaMiddleware = require('../koa')
 
 function createApp(agentOpts, verOpts, mw) {
-  const app = koa()
+  const app = new Koa()
   onerror(app)
   app.use(koaMiddleware(agentOpts, verOpts))
   app.use(mw)

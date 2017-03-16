@@ -38,23 +38,23 @@
   },
   "homepage": "https://github.com/KualiCo/service2service#readme",
   "dependencies": {
-    "bluebird": "^3.4.7",
+    "bluebird": "^3.5.0",
     "jsonwebtoken": "^7.3.0",
-    "request": "^2.79.0",
-    "request-promise": "^4.1.1",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.0",
     "uuid": "^3.0.1"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
-    "eslint": "^3.16.0",
+    "eslint": "^3.17.1",
     "eslint-plugin-mocha": "^4.8.0",
-    "express": "^4.14.1",
+    "express": "^4.15.2",
     "istanbul": "^0.4.5",
-    "koa": "^1.2.5",
-    "koa-onerror": "^3.0.2",
+    "koa": "^2.2.0",
+    "koa-onerror": "^3.1.0",
     "mocha": "^3.2.0",
-    "nock": "^9.0.6",
+    "nock": "^9.0.9",
     "supertest": "^3.0.0"
   }
 }
