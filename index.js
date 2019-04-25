@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken')
 const uuid = require('uuid')
 const tryFallbacks = require('./lib/try-fallbacks')
 const Housekeeper = require('./lib/housekeeper')
+const ssmParameterSecrets = require('./lib/ssm-param-secret')
 
 Promise.promisifyAll(jwt)
 
@@ -27,7 +28,9 @@ class ServiceAgent {
       disableSingleUse: false
     }, options)
 
-    if (!options.secret) {
+    if (options.ssmRoleToAssume && options.ssmParameterName) {
+      options.secret = ssmParameterSecrets(options)
+    } else if (!options.secret) {
       throw new ReferenceError('options.secret is required')
     }
 
