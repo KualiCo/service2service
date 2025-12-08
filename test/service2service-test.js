@@ -312,6 +312,44 @@ describe('service2service', () => {
         .to.eventually.be.equal('success')
     })
 
+    it('should handle when url is already provided (not uri)', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .reply(200, 'success')
+      return agent.request({
+        url: 'http://example.com',
+        method: 'GET'
+      })
+        .then((body) => expect(body).to.be.equal('success'))
+    })
+
+    it('should handle non-HTTP errors (network errors)', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      // Use nock to simulate a network error (no response)
+      nock('http://example.com')
+        .get('/network-error')
+        .replyWithError('Network error')
+      const requestPromise = agent.request({
+        uri: 'http://example.com/network-error',
+        method: 'GET'
+      })
+      return expect(requestPromise)
+        .to.eventually.be.rejectedWith('Network error')
+    })
+
+    it('should handle HTTP errors when response.data is falsy', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .reply(401, null) // null response body
+      const requestPromise = agent.request({
+        uri: 'http://example.com',
+        method: 'GET'
+      })
+      return expect(requestPromise).to.eventually.be.rejected
+    })
+
   })
 
 })
