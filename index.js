@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken')
 const uuid = require('uuid')
 const tryFallbacks = require('./lib/try-fallbacks')
 const Housekeeper = require('./lib/housekeeper')
+const handleAxiosRequest = require('./helpers/requestAxios')
 
 Promise.promisifyAll(jwt)
 
@@ -87,11 +88,7 @@ class ServiceAgent {
       reqOptions.headers = Object.assign({
         [this.header]: this.tokenPrefix + token
       }, reqOptions.headers)
-      // Convert 'uri' to 'url' for axios compatibility
-      if (reqOptions.uri && !reqOptions.url) {
-        reqOptions.url = reqOptions.uri
-        delete reqOptions.uri
-      }
+      handleAxiosRequest(reqOptions)
       return axios(reqOptions)
         .then((response) => response.data)
         .catch((error) => {
@@ -101,6 +98,8 @@ class ServiceAgent {
             const errorMessage = error.response.data || error.message
             const err = new Error(errorMessage)
             err.statusCode = error.response.status
+            err.error = error.response.data
+            err.response = error.response
             return Promise.reject(err)
           }
           return Promise.reject(error)

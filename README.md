@@ -184,15 +184,30 @@ sugar methods like `axios.post()` or `axios.get()`.
 
 - `reqOptions` {Object} - The options you pass into axios. You can see all
   of the available options [`here`][axios]. Common options:
-  - `url` or `uri` {string} - The URL to request (both are supported for compatibility)
+  - `url` {string} - The URL to request
   - `method` {string} - HTTP method (GET, POST, etc.)
-  - `data` {Object|string} - Request body (use `data` instead of `body`)
+  - `data` {Object|string} - Request body
   - `headers` {Object} - Custom headers
-  - `params` {Object} - URL query parameters (use `params` instead of `qs`)
+  - `params` {Object} - URL query parameters
+
+  **Backward compatibility:** For compatibility with `request-promise`, the
+  following aliases are also supported:
+  - `uri` - Alias for `url`
+  - `body` - Alias for `data`
+  - `qs` - Alias for `params`
+
 - `genOptions` {Object} - The options that get passed into `agent.generate()`
 - `payload` {Object} - The payload that gets passed into `agent.generate()`
 
-**Note:** The method returns a promise that resolves to the response body (not the full response object). For error handling, HTTP errors (4xx, 5xx) will reject with an error containing the response body as the message, similar to request-promise behavior.
+**Return value:** The method returns a promise that resolves to the response
+body (`response.data`), not the full response object.
+
+**Error handling:** HTTP errors (4xx, 5xx) will reject with an error object
+containing:
+- `message` - The response body or error message
+- `statusCode` - The HTTP status code
+- `error` - The response body (for compatibility with request-promise)
+- `response` - The full axios response object (for debugging)
 
 ## middleware
 

@@ -343,11 +343,70 @@ describe('service2service', () => {
       nock('http://example.com')
         .get('/')
         .reply(401, null) // null response body
-      const requestPromise = agent.request({
+      return agent.request({
         uri: 'http://example.com',
         method: 'GET'
       })
-      return expect(requestPromise).to.eventually.be.rejected
+        .catch((err) => {
+          expect(err.statusCode).to.equal(401)
+          expect(err).to.have.property('response')
+        })
+    })
+
+    it('should convert qs to params for axios compatibility', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .query({ foo: 'bar' })
+        .reply(200, 'success')
+      return agent.request({
+        uri: 'http://example.com',
+        method: 'GET',
+        qs: { foo: 'bar' }
+      })
+        .then((body) => expect(body).to.be.equal('success'))
+    })
+
+    it('should convert body to data for axios compatibility', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .post('/', { foo: 'bar' })
+        .reply(200, 'success')
+      return agent.request({
+        uri: 'http://example.com',
+        method: 'POST',
+        body: { foo: 'bar' }
+      })
+        .then((body) => expect(body).to.be.equal('success'))
+    })
+
+    it('should remove json option without breaking', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .reply(200, 'success')
+      return agent.request({
+        uri: 'http://example.com',
+        method: 'GET',
+        json: true
+      })
+        .then((body) => expect(body).to.be.equal('success'))
+    })
+
+    it('should include error and response in HTTP errors', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .reply(500, { message: 'Server error' })
+      return agent.request({
+        uri: 'http://example.com',
+        method: 'GET'
+      })
+        .catch((err) => {
+          expect(err.statusCode).to.equal(500)
+          expect(err.error).to.deep.equal({ message: 'Server error' })
+          expect(err).to.have.property('response')
+        })
     })
 
   })
