@@ -13,6 +13,7 @@
   },
   "files": [
     "lib",
+    "helpers",
     "express.js",
     "index.js",
     "koa.js"

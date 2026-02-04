@@ -1,12 +1,11 @@
 'use strict'
 
 const Promise = require('bluebird')
-const axios = require('axios')
 const jwt = require('jsonwebtoken')
 const uuid = require('uuid')
 const tryFallbacks = require('./lib/try-fallbacks')
 const Housekeeper = require('./lib/housekeeper')
-const handleAxiosRequest = require('./helpers/requestAxios')
+const { executeAxiosRequest } = require('./helpers/requestOptionsToAxios')
 
 Promise.promisifyAll(jwt)
 
@@ -88,22 +87,7 @@ class ServiceAgent {
       reqOptions.headers = Object.assign({
         [this.header]: this.tokenPrefix + token
       }, reqOptions.headers)
-      handleAxiosRequest(reqOptions)
-      return axios(reqOptions)
-        .then((response) => response.data)
-        .catch((error) => {
-          // Handle HTTP errors similar to request-promise
-          // request-promise rejects with the response body as the error message
-          if (error.response) {
-            const errorMessage = error.response.data || error.message
-            const err = new Error(errorMessage)
-            err.statusCode = error.response.status
-            err.error = error.response.data
-            err.response = error.response
-            return Promise.reject(err)
-          }
-          return Promise.reject(error)
-        })
+      return executeAxiosRequest(reqOptions)
     })
   }
 
