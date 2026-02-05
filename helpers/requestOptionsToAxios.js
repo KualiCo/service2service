@@ -2,21 +2,22 @@
 
 const axios = require('axios')
 
+function mapOption(reqOptions, from, to) {
+  const hasFrom = typeof reqOptions[from] !== 'undefined'
+  const noTo = typeof reqOptions[to] === 'undefined'
+  if (hasFrom && noTo) {
+    reqOptions[to] = reqOptions[from]
+    delete reqOptions[from]
+  }
+}
+
 function requestOptionsToAxios(reqOptions) {
   if (reqOptions.uri && !reqOptions.url) {
     reqOptions.url = reqOptions.uri
     delete reqOptions.uri
   }
-
-  if (typeof reqOptions.qs !== 'undefined' && typeof reqOptions.params === 'undefined') {
-    reqOptions.params = reqOptions.qs
-    delete reqOptions.qs
-  }
-  if (typeof reqOptions.body !== 'undefined' && typeof reqOptions.data === 'undefined') {
-    reqOptions.data = reqOptions.body
-    delete reqOptions.body
-  }
-
+  mapOption(reqOptions, 'qs', 'params')
+  mapOption(reqOptions, 'body', 'data')
   delete reqOptions.json
 }
 
@@ -24,7 +25,9 @@ function requestOptionsToAxios(reqOptions) {
 function executeAxiosRequest(reqOptions) {
   const resolveWithFullResponse = reqOptions.resolveWithFullResponse === true
   const simple = reqOptions.simple !== false
-  if ('resolveWithFullResponse' in reqOptions) delete reqOptions.resolveWithFullResponse
+  if ('resolveWithFullResponse' in reqOptions) {
+    delete reqOptions.resolveWithFullResponse
+  }
   if ('simple' in reqOptions) delete reqOptions.simple
 
   requestOptionsToAxios(reqOptions)
