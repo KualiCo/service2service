@@ -34,24 +34,23 @@ agent.generate()
     // token is verified, error gets thrown if not verified
   })
 
-// This is an instance of request promise that will automatically add the
+// This is a wrapper around axios that will automatically add the
 // header to every request. This takes care of the `generate` functionality for
 // you.
 
-// Note that this is just a wrapper around request promise because we have to
+// Note that this is just a wrapper around axios because we have to
 // handle the case of asynchronous secret getting. If you wish to use the raw
-// request object, implement the `generate()` method into your workflow
+// axios object, implement the `generate()` method into your workflow
 agent
   .request({
-    uri: 'http://www.example.com',
-    method: 'POST'
-    body: {
+    url: 'http://www.example.com',
+    method: 'POST',
+    data: {
       some: 'payload'
-    },
-    resolveWithFullResponse: true,
-    json: true
+    }
   })
-  .then(({ body, statusCode }) => {
+  .then((response) => {
+    // response is the response body (axios automatically parses JSON)
     // Successful request!
   })
 ```
@@ -179,14 +178,36 @@ parameter is optional and is only used if you want to override the agent's
 
 ## `agent.request(reqOptions[, genOptions [, payload])`
 
-This is wrapper around [`request-promise`][request]. It accepts all the same
-options. Note that this is just a wrapper function and does not provide the
-sugar methods like `request.post()` or `request.get()`.
+This is a wrapper around [`axios`][axios]. It accepts axios-compatible options.
+Note that this is just a wrapper function and does not provide the
+sugar methods like `axios.post()` or `axios.get()`.
 
-- `reqOptions` {Object} - The options you pass into `request`. You can see all
-  of the available options [`here`][request]
+- `reqOptions` {Object} - The options you pass into axios. You can see all
+  of the available options [`here`][axios]. Common options:
+  - `url` {string} - The URL to request
+  - `method` {string} - HTTP method (GET, POST, etc.)
+  - `data` {Object|string} - Request body
+  - `headers` {Object} - Custom headers
+  - `params` {Object} - URL query parameters
+
+  **Backward compatibility:** For compatibility with `request-promise`, the
+  following aliases are also supported:
+  - `uri` - Alias for `url`
+  - `body` - Alias for `data`
+  - `qs` - Alias for `params`
+
 - `genOptions` {Object} - The options that get passed into `agent.generate()`
 - `payload` {Object} - The payload that gets passed into `agent.generate()`
+
+**Return value:** The method returns a promise that resolves to the response
+body (`response.data`), not the full response object.
+
+**Error handling:** HTTP errors (4xx, 5xx) will reject with an error object
+containing:
+- `message` - The response body or error message
+- `statusCode` - The HTTP status code
+- `error` - The response body (for compatibility with request-promise)
+- `response` - The full axios response object (for debugging)
 
 ## middleware
 
@@ -216,4 +237,4 @@ koaMiddleware(agent)
   `agent.verify(token, options)`
 
 [jwt.sign]: https://www.npmjs.com/package/jsonwebtoken#user-content-jwtsignpayload-secretorprivatekey-options-callback
-[request]: https://www.npmjs.com/package/request-promise
+[axios]: https://www.npmjs.com/package/axios

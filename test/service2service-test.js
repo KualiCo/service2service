@@ -6,6 +6,8 @@ const Promise = require('bluebird')
 const jwt = require('jsonwebtoken')
 const nock = require('nock')
 const ServiceAgent = require('../index')
+const requestOptionsToAxios = require('../helpers/requestOptionsToAxios')
+const executeAxiosRequest = requestOptionsToAxios.executeAxiosRequest
 
 const expect = chai.expect
 
@@ -310,6 +312,270 @@ describe('service2service', () => {
       }, null, { foo: 'bar' })
       expect(requestPromise)
         .to.eventually.be.equal('success')
+    })
+
+    it('should handle when url is already provided (not uri)', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .reply(200, 'success')
+      return agent.request({
+        url: 'http://example.com',
+        method: 'GET'
+      })
+        .then((body) => expect(body).to.be.equal('success'))
+    })
+
+    it('should handle non-HTTP errors (network errors)', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      // Use nock to simulate a network error (no response)
+      nock('http://example.com')
+        .get('/network-error')
+        .replyWithError('Network error')
+      const requestPromise = agent.request({
+        uri: 'http://example.com/network-error',
+        method: 'GET'
+      })
+      return expect(requestPromise)
+        .to.eventually.be.rejectedWith('Network error')
+    })
+
+    it('should handle HTTP errors when response.data is falsy', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .reply(401, null) // null response body
+      return agent.request({
+        uri: 'http://example.com',
+        method: 'GET'
+      })
+        .catch((err) => {
+          expect(err.statusCode).to.equal(401)
+          expect(err).to.have.property('response')
+        })
+    })
+
+    it('should convert qs to params for axios compatibility', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .query({ foo: 'bar' })
+        .reply(200, 'success')
+      return agent.request({
+        uri: 'http://example.com',
+        method: 'GET',
+        qs: { foo: 'bar' }
+      })
+        .then((body) => expect(body).to.be.equal('success'))
+    })
+
+    it('should convert body to data for axios compatibility', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .post('/', { foo: 'bar' })
+        .reply(200, 'success')
+      return agent.request({
+        uri: 'http://example.com',
+        method: 'POST',
+        body: { foo: 'bar' }
+      })
+        .then((body) => expect(body).to.be.equal('success'))
+    })
+
+    it('should remove json option without breaking', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .reply(200, 'success')
+      return agent.request({
+        uri: 'http://example.com',
+        method: 'GET',
+        json: true
+      })
+        .then((body) => expect(body).to.be.equal('success'))
+    })
+
+    it('should include error and response in HTTP errors', () => {
+      const agent = new ServiceAgent({ secret: 'foo' })
+      nock('http://example.com')
+        .get('/')
+        .reply(500, { message: 'Server error' })
+      return agent.request({
+        uri: 'http://example.com',
+        method: 'GET'
+      })
+        .catch((err) => {
+          expect(err.statusCode).to.equal(500)
+          expect(err.error).to.deep.equal({ message: 'Server error' })
+          expect(err).to.have.property('response')
+        })
+    })
+
+  })
+
+  describe('helpers/requestOptionsToAxios', () => {
+
+    describe('requestOptionsToAxios', () => {
+
+      it('converts uri to url when url is not set', () => {
+        const opts = { uri: 'http://example.com', method: 'GET' }
+        requestOptionsToAxios(opts)
+        expect(opts).to.have.property('url', 'http://example.com')
+        expect(opts).to.not.have.property('uri')
+      })
+
+      it('does not overwrite url when uri is also present', () => {
+        const opts = { uri: 'http://other.com', url: 'http://example.com' }
+        requestOptionsToAxios(opts)
+        expect(opts.url).to.equal('http://example.com')
+      })
+
+      it('converts qs to params when params is not set', () => {
+        const opts = { url: 'http://example.com', qs: { foo: 'bar' }}
+        requestOptionsToAxios(opts)
+        expect(opts).to.have.property('params')
+        expect(opts.params).to.deep.equal({ foo: 'bar' })
+        expect(opts).to.not.have.property('qs')
+      })
+
+      it('does not overwrite params when qs is also present', () => {
+        const opts = {
+          url: 'http://example.com',
+          qs: { a: 1 },
+          params: { b: 2 }
+        }
+        requestOptionsToAxios(opts)
+        expect(opts.params).to.deep.equal({ b: 2 })
+        expect(opts).to.have.property('qs')
+      })
+
+      it('converts body to data when data is not set', () => {
+        const opts = {
+          url: 'http://example.com',
+          method: 'POST',
+          body: { x: 1 }
+        }
+        requestOptionsToAxios(opts)
+        expect(opts).to.have.property('data')
+        expect(opts.data).to.deep.equal({ x: 1 })
+        expect(opts).to.not.have.property('body')
+      })
+
+      it('does not overwrite data when body is also present', () => {
+        const opts = {
+          url: 'http://example.com',
+          method: 'POST',
+          body: { from: 'body' },
+          data: { from: 'data' }
+        }
+        requestOptionsToAxios(opts)
+        expect(opts.data).to.deep.equal({ from: 'data' })
+        expect(opts).to.have.property('body')
+      })
+
+      it('converts body to data for PUT', () => {
+        const opts = {
+          url: 'http://example.com/item',
+          method: 'PUT',
+          body: { name: 'updated' }
+        }
+        requestOptionsToAxios(opts)
+        expect(opts.data).to.deep.equal({ name: 'updated' })
+        expect(opts).to.not.have.property('body')
+      })
+
+      it('removes json option', () => {
+        const opts = { url: 'http://example.com', json: true }
+        requestOptionsToAxios(opts)
+        expect(opts).to.not.have.property('json')
+      })
+
+    })
+
+    describe('executeAxiosRequest', () => {
+
+      it('returns only response body by default', () => {
+        nock('http://example.com')
+          .get('/')
+          .reply(200, 'success')
+        return executeAxiosRequest({
+          url: 'http://example.com',
+          method: 'GET'
+        }).then((result) => {
+          expect(result).to.equal('success')
+        })
+      })
+
+      it('returns full response when resolveWithFullResponse is true', () => {
+        nock('http://example.com')
+          .get('/')
+          .reply(200, 'ok')
+        return executeAxiosRequest({
+          url: 'http://example.com',
+          method: 'GET',
+          resolveWithFullResponse: true
+        }).then((result) => {
+          expect(result).to.have.property('statusCode', 200)
+          expect(result).to.have.property('headers')
+          expect(result).to.have.property('body', 'ok')
+        })
+      })
+
+      it('resolves with body on 4xx when simple is false', () => {
+        nock('http://example.com')
+          .get('/not-found')
+          .reply(404, { error: 'Not found' })
+        return executeAxiosRequest({
+          url: 'http://example.com/not-found',
+          method: 'GET',
+          simple: false
+        }).then((body) => {
+          expect(body).to.deep.equal({ error: 'Not found' })
+        })
+      })
+
+      it('rejects with err with statusCode and response on HTTP error', () => {
+        nock('http://example.com')
+          .get('/')
+          .reply(500, { message: 'Server error' })
+        return executeAxiosRequest({
+          url: 'http://example.com',
+          method: 'GET'
+        }).catch((err) => {
+          expect(err).to.be.instanceOf(Error)
+          expect(err.statusCode).to.equal(500)
+          expect(err.error).to.deep.equal({ message: 'Server error' })
+          expect(err).to.have.property('response')
+        })
+      })
+
+      it('preserves response headers and config on rejected error', () => {
+        nock('http://example.com')
+          .get('/')
+          .reply(500, { message: 'Server error' })
+        return executeAxiosRequest({
+          url: 'http://example.com',
+          method: 'GET'
+        }).catch((err) => {
+          expect(err.response).to.have.property('headers')
+          expect(err.response).to.have.property('status', 500)
+        })
+      })
+
+      it('passes through custom headers in the request', () => {
+        nock('http://example.com')
+          .get('/')
+          .matchHeader('x-custom', 'my-value')
+          .reply(200, 'ok')
+        return executeAxiosRequest({
+          url: 'http://example.com',
+          method: 'GET',
+          headers: { 'X-Custom': 'my-value' }
+        }).then((result) => {
+          expect(result).to.equal('ok')
+        })
+      })
+
     })
 
   })

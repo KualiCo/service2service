@@ -1,0 +1,6 @@
+# CODEOWNERS file
+# This file defines code owners for the repository
+# All pull requests will require review from at least one code owner
+
+* @jenniferharmon @thachla-nguyen @iambrandonn
+

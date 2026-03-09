@@ -1,6 +1,6 @@
 {
   "name": "service2service",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "A node module to make service to service communication secure and easy",
   "main": "index.js",
   "scripts": {
@@ -13,6 +13,7 @@
   },
   "files": [
     "lib",
+    "helpers",
     "express.js",
     "index.js",
     "koa.js"
@@ -38,10 +39,9 @@
   },
   "homepage": "https://github.com/KualiCo/service2service#readme",
   "dependencies": {
+    "axios": "^0.21.2",
     "bluebird": "^3.5.0",
     "jsonwebtoken": "^8.4.0",
-    "request": "^2.81.0",
-    "request-promise": "^4.2.0",
     "uuid": "^3.0.1"
   },
   "devDependencies": {

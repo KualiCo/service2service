@@ -1,11 +1,11 @@
 'use strict'
 
 const Promise = require('bluebird')
-const request = require('request-promise')
 const jwt = require('jsonwebtoken')
 const uuid = require('uuid')
 const tryFallbacks = require('./lib/try-fallbacks')
 const Housekeeper = require('./lib/housekeeper')
+const { executeAxiosRequest } = require('./helpers/requestOptionsToAxios')
 
 Promise.promisifyAll(jwt)
 
@@ -87,7 +87,7 @@ class ServiceAgent {
       reqOptions.headers = Object.assign({
         [this.header]: this.tokenPrefix + token
       }, reqOptions.headers)
-      return request(reqOptions)
+      return executeAxiosRequest(reqOptions)
     })
   }
 
